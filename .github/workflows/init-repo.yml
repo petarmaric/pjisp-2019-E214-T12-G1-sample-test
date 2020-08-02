@@ -1,0 +1,39 @@
+name: Project create
+
+on:
+  create
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 2.7
+    - name: Install pipenv
+      uses: dschep/install-pipenv-action@v1
+    - name: init_template
+      run: |
+        REPO=$(echo ${{github.repository}} | cut -d "/" -f 2)
+        pipenv install
+        TEMPLATE=$(pipenv run make get-template repo_name=$REPO)
+        pipenv run make init template=$TEMPLATE
+    - name: add_badge
+      run: |
+        REPO=${{github.repository}}
+        echo "|Actions Status|
+          
+        .. |Actions Status| image:: https://github.com/$REPO/workflows/PJISP%20assignment/badge.svg
+           :alt: CPython build status on GitHub Actions
+           :target: https://github.com/$REPO/actions
+        " | cat - README.rst > README
+        mv README README.rst
+    - name: push_changes
+      run: |
+        git config --global user.email "action@github.com"
+        git config --global user.name "github"
+        git add .
+        git commit -m "Init template"
+        git push
